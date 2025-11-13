@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PPE Request System</title>
+<style>
+  body {
+    font-family: "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #00416A, #E4E5E6);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .container {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background-image: url('logo2.jpg');
+    background-size: cover; 
+    background-position: center; 
+     background: linear-gradient(rgba(117, 114, 114, 0.6),rgba(240, 233, 233, 0.6)),url('logo2.jpg')center/cover no-repeat;
+
+  }
+
+  h2, h3 {
+    text-align: center;
+    color: #00416A;
+  }
+
+  input, select, textarea, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 15px;
+  }
+
+  textarea { resize: none; height: 70px; }
+
+  .btn {
+    background: #00416A;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .btn:hover { background: #0060a5; }
+  .btn:hover {
+  text-decoration: underline;
+  /* background: darkgray; optional */
+}
+  .table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-top: 15px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+  }
+
+  table, th, td {
+    border: 1px solid #bbb;
+  }
+
+  th, td {
+    padding: 8px;
+    text-align: left;
+  }
+
+  th {
+    background-color: #00416A;
+    color: white;
+    white-space: nowrap;
+  }
+
+  .link {
+    color: #00416A;
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  .hidden { display: none; }
+
+  .actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .status-select {
+    padding: 5px;
+  }
+
+  .center {
+    text-align: center;
+  }
+  .status-pending { color: orange; font-weight: bold; }
+  .status-approved { color: green; font-weight: bold; }
+  .status-issued { color: blue; font-weight: bold; }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Signup -->
+  <div id="signup-section" class="hidden">
+    <h2 style="color: red;">🔐 Sign Up for PPE</h2>
+    <input id="signup-username" placeholder="Username" required>
+    <input id="signup-empid" placeholder="Employee ID" required>
+    <input id="signup-email" placeholder="Email" required>
+    <input id="signup-password" type="password" placeholder="Password" required>
+    <button class="btn" onclick="signUp()">Sign Up</button>
+    <p class="center">Already have an account? <a href="#" class="link" onclick="showLogin()" style="color: red;">Login</a></p>
+  </div>
+
+  <!-- Login -->
+  <div id="login-section">
+    <h2 style="color: red;">Login</h2>
+    <input id="login-email" placeholder="Email" required>
+    <input id="login-password" type="password" placeholder="Password" required>
+    <button class="btn" onclick="login()">Login</button>
+    <button class="btn" onclick="changePassword()">Change Password</button>
+    <p class="center">Don't have an account? <a href="#" class="link" onclick="showSignup()" style="color: red;">Sign Up</a></p>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard-section" class="hidden">
+    <h2 id="welcome-msg"></h2>
+    <div class="actions">
+      <button class="btn" onclick="showRequestForm()">+ New PPE Request</button>
+      <button class="btn" style="background:gray;" onclick="logout()">Logout</button>
+    </div>
+
+    <h3>Your Requests</h3>
+    <div class="table-wrapper">
+      <table id="requests-table">
+        <tr><th>#</th><th>Equipment</th><th>Qty</th><th>Reason</th><th>Status</th></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- PPE Request Form -->
+  <div id="request-form" class="hidden">
+    <h2>PPE Request Form</h2>
+    <label>Equipment</label>
+    <select id="req-equipment" required>
+      <option value="">-- Select Equipment --</option>
+      <option>FR Jackets(S)</option>
+      <option>FR Jackets(M)</option>
+      <option>FR Jackets(L)</option>
+      <option>FR Jackets(XL)</option>
+      <option>FR Jackets(XLL)</option>
+      <option>FR Jackets(XLLL)</option>
+      <option>FR Pant(S)</option>
+      <option>FR Pant(M)</option>
+      <option>FR Pant(L)</option>
+      <option>FR Pant(XL)</option>
+      <option>FR Pant(XLL)</option>
+      <option>FR Pant(XLLL)</option>
+      <option>Safety Shoes(6)</option>
+      <option>Safety Shoes(7)</option>
+      <option>Safety Shoes(8)</option>
+      <option>Safety Shoes(9)</option>
+      <option>Safety Shoes(10)</option>
+      <option>Rubber Gloves</option>
+      <option>Cavler Gloves</option>
+      <option>PVC Coated Gloves</option>
+      <option>Nose Mask</option>
+      <option>Helmet</option>
+      <option>Ear Plugs</option>
+      <option>Goggles</option>
+      <option>Over Head Goggles</option>
+      <option>Face Shield With Frame</option>
+      <option>Face Shield</option>
+      <option>Leg Gaurd</option>
+      <option>Neck Gaurd</option>
+      <option>CO Monitor</option>
+      <option>Multi Gas Detector</option>
+    </select>
+
+    <label>Quantity</label>
+    <input id="req-qty" type="number" placeholder="Enter quantity" required min="1" max="4">
+
+    <label>Reason</label>
+    <textarea id="req-reason" placeholder="Enter reason for requesting" required></textarea>
+
+    <div class="actions">
+      <button class="btn" onclick="submitRequest()">Submit Request</button>
+      <button class="btn" style="background:gray;" onclick="showDashboard()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Store Incharge Dashboard -->
+  <div id="store-section" class="hidden">
+    <button class="btn" onclick="exportCSV()">⬇️ Export to CSV</button>
+    <h2 style="color: red;">Store Incharge Dashboard</h2>
+    <div class="actions">
+      <button class="btn" style="background:gray; " onclick="logout()">Logout</button>
+    </div>
+    <div class="table-wrapper">
+      <table id="store-table">
+        <tr><th>#</th><th>User</th><th>Equipment</th><th>Qty</th><th>Reason</th><th>Status</th><th>Action</th></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+const API_BASE = "http://localhost:5000/api"; // backend base URL
+
+
+// UI control
+function hideAll() { document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden')); }
+function showSignup() { hideAll(); document.getElementById('signup-section').classList.remove('hidden'); }
+function showLogin() { hideAll(); document.getElementById('login-section').classList.remove('hidden'); }
+function showDashboard() {
+  hideAll();
+  if (currentUser.role === 'store') showStoreDashboard();
+  else {
+    document.getElementById('dashboard-section').classList.remove('hidden');
+    document.getElementById('welcome-msg').textContent = `Welcome, ${currentUser.username}`;
+    loadRequests();
+  }
+}
+function showRequestForm() { hideAll(); document.getElementById('request-form').classList.remove('hidden'); }
+
+// Auth functions
+async function signUp() {
+  const username = document.getElementById('signup-username').value.trim();
+  const employee_id = document.getElementById('signup-empid').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value.trim();
+
+  if (!username || !employee_id || !email || !password) return alert("Please fill all fields.");
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, employee_id, email, password })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert("Signup successful! Please login.");
+      showLogin();
+    } else {
+      alert(data.msg || "Signup failed.");
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+}
+
+
+async function login() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value.trim();
+
+  if (!email || !password) return alert("Please fill in all fields.");
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      currentUser = data;
+      localStorage.setItem('currentUser', JSON.stringify(data));
+      showDashboard();
+    } else {
+      alert(data.msg || "Invalid login credentials.");
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+}
+
+
+
+function logout() {
+  currentUser = null;
+  localStorage.removeItem('currentUser');
+  showLogin();
+}
+
+// Request handling
+async function submitRequest() {
+  const equipment = document.getElementById('req-equipment').value;
+  const quantity = document.getElementById('req-qty').value;
+  const reason = document.getElementById('req-reason').value.trim();
+
+  if (!equipment || !quantity || !reason) return alert("Please complete all fields.");
+
+  try {
+    const res = await fetch(`${API_BASE}/requests`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user: currentUser.username,
+        userId: currentUser.employee_id,
+        equipment,
+        quantity,
+        reason
+      })
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      alert("Request submitted successfully!");
+      showDashboard();
+    } else {
+      alert(data.msg || "Failed to submit request.");
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+}
+
+
+async function loadRequests() {
+  const table = document.getElementById('requests-table');
+  table.innerHTML = "<tr><th>#</th><th>Equipment</th><th>Qty</th><th>Reason</th><th>Status</th></tr>";
+
+  try {
+    const res = await fetch(`${API_BASE}/requests/${currentUser.employee_id}`);
+    const data = await res.json();
+    data.forEach((r, i) => {
+      table.innerHTML += `<tr>
+        <td>${i + 1}</td>
+        <td>${r.equipment}</td>
+        <td>${r.quantity}</td>
+        <td>${r.reason}</td>
+        <td>${r.status}</td>
+      </tr>`;
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+
+async function showStoreDashboard() {
+  hideAll();
+  document.getElementById('store-section').classList.remove('hidden');
+  const table = document.getElementById('store-table');
+  table.innerHTML = "<tr><th>#</th><th>User</th><th>Equipment</th><th>Qty</th><th>Reason</th><th>Status</th><th>Action</th></tr>";
+
+  try {
+    const res = await fetch(`${API_BASE}/requests`);
+    const data = await res.json();
+
+    data.forEach((r, i) => {
+      table.innerHTML += `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${r.user}</td>
+          <td>${r.equipment}</td>
+          <td>${r.quantity}</td>
+          <td>${r.reason}</td>
+          <td>${r.status}</td>
+          <td>
+            <select id="status-${r._id}" class="status-select">
+              <option ${r.status === "Pending" ? "selected" : ""}>Pending</option>
+              <option ${r.status === "Approved" ? "selected" : ""}>Approved</option>
+              <option ${r.status === "Issued" ? "selected" : ""}>Issued</option>
+            </select>
+            <button class="btn" style="padding:5px 10px;" onclick="updateStatus('${r._id}')">Update</button>
+          </td>
+        </tr>`;
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+
+async function updateStatus(requestId) {
+  const status = document.getElementById(`status-${requestId}`).value;
+  try {
+    const res = await fetch(`${API_BASE}/requests/${requestId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert("Status updated successfully!");
+      showStoreDashboard();
+    } else {
+      alert(data.msg || "Failed to update status.");
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+}
+
+function exportCSV() {
+  const rows = [["User", "Equipment", "Qty", "Reason", "Status"]];
+  requests.forEach(r => rows.push([r.user, r.equipment, r.quantity, r.reason, r.status]));
+  let csv = rows.map(r => r.join(",")).join("\n");
+  let blob = new Blob([csv], { type: "text/csv" });
+  let a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "ppe_requests.csv";
+  a.click();
+}
+
+
+// ✅ Press Enter to move to next field and auto-submit on last
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    const focusable = Array.from(document.querySelectorAll("input, select, textarea, button"))
+      .filter(el => !el.disabled && el.offsetParent !== null);
+    const index = focusable.indexOf(document.activeElement);
+    if (index > -1) {
+      e.preventDefault();
+      if (index < focusable.length - 1) {
+        focusable[index + 1].focus();
+      } else {
+        focusable[index].click();
+      }
+    }
+  }
+});
+
+
+// ✅ Always show login first
+if (currentUser) showDashboard();
+else showLogin();
+</script>
+
+</body>
+</html>
