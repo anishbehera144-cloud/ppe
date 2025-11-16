@@ -50,6 +50,7 @@ export default function Home() {
 
   const [requests, setRequests] = useState([]);
   const [form, setForm] = useState({ equipment: '', quantity: 1, reason: '' });
+  const [limitWarning, setLimitWarning] = useState('');
 
   const API_BASE = '/api';
 
@@ -107,6 +108,81 @@ export default function Home() {
     } catch (err) { console.error(err); }
   }
 
+  // monthly limits per equipment key (by substring match)
+  const equipmentLimits = {
+    fr_jacket: 1,
+    fr_pant: 1,
+    safety_shoes: 1,
+    rubber_gloves: 2,
+    cavler_gloves: 2,
+    pvc_coated_gloves: 3,
+    nose_mask: 4,
+    helmet: 1,
+    ear_plugs: 2,
+    goggles: 2,
+    over_head_goggles: 2,
+    face_shield_with_frame: 1,
+    face_shield: 1,
+    leg_gaurd: 1,
+    neck_gaurd: 1,
+    co_monitor: 1,
+    multi_gas_detector: 1
+  };
+
+  function getEquipKey(equip) {
+    if (!equip) return null;
+    const e = String(equip).toLowerCase();
+    if (e.includes('fr jacket') || e.includes('fr jackets')) return 'fr_jacket';
+    if (e.includes('fr pant')) return 'fr_pant';
+    if (e.includes('safety shoes')) return 'safety_shoes';
+    if (e.includes('rubber gloves')) return 'rubber_gloves';
+    if (e.includes('cavler gloves')) return 'cavler_gloves';
+    if (e.includes('pvc coated gloves')) return 'pvc_coated_gloves';
+    if (e.includes('nose mask')) return 'nose_mask';
+    if (e.includes('helmet')) return 'helmet';
+    if (e.includes('ear plugs')) return 'ear_plugs';
+    if (e.includes('over head goggles')) return 'over_head_goggles';
+    if (e.includes('face shield with frame')) return 'face_shield_with_frame';
+    if (e.includes('face shield')) return 'face_shield';
+    if (e.includes('leg gaurd')) return 'leg_gaurd';
+    if (e.includes('neck gaurd')) return 'neck_gaurd';
+    if (e.includes('co monitor')) return 'co_monitor';
+    if (e.includes('multi gas detector')) return 'multi_gas_detector';
+    if (e.includes('goggles')) return 'goggles';
+    return null;
+  }
+
+  // returns {issuedSum, limit, willExceed, reached}
+  function checkMonthlyLimit(equipment, requestedQty = 1) {
+    const key = getEquipKey(equipment);
+    if (!key) return { issuedSum: 0, limit: null, willExceed: false, reached: false };
+    const limit = equipmentLimits[key] || null;
+    if (!limit) return { issuedSum: 0, limit: null, willExceed: false, reached: false };
+    const now = new Date();
+    const issuedSum = requests.reduce((acc, r) => {
+      const rk = getEquipKey(r.equipment);
+      if (rk !== key) return acc;
+      if (!r.status || r.status !== 'Issued') return acc;
+      const created = r.createdAt ? new Date(r.createdAt) : null;
+      if (!created) return acc;
+      if (created.getFullYear() === now.getFullYear() && created.getMonth() === now.getMonth()) return acc + (r.quantity || 0);
+      return acc;
+    }, 0);
+    const willExceed = (issuedSum + (requestedQty || 0)) > limit;
+    const reached = issuedSum >= limit;
+    return { issuedSum, limit, willExceed, reached };
+  }
+
+  useEffect(() => {
+    if (!form.equipment) { setLimitWarning(''); return; }
+    const qty = Number(form.quantity) || 1;
+    const info = checkMonthlyLimit(form.equipment, qty);
+    if (!info.limit) { setLimitWarning(''); return; }
+    if (info.reached) setLimitWarning(`You have reached your monthly limit for this equipment (Mention the Reason in the BOX).`);
+    else if (info.willExceed) setLimitWarning(`This request would exceed your monthly limit (issued: ${info.issuedSum} / limit: ${info.limit}).`);
+    else setLimitWarning('');
+  }, [form.equipment, form.quantity, requests]);
+
   async function updateStatus(id, status) {
     const res = await fetch(`${API_BASE}/requests/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status }) });
     const data = await res.json();
@@ -140,6 +216,7 @@ export default function Home() {
       <div style={styles.box} className={`box ${view === 'login' ? 'small' : ''}`}>
         {(!currentUser && view === 'login') && (
           <div>
+            <h2 style={{color:'red'}}>Site PPE Requisition </h2>
             <h2 style={{color:'red'}}>Login</h2>
             <input style={styles.input} value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} placeholder="Email" />
             <input style={styles.input} value={loginPassword} onChange={e=>setLoginPassword(e.target.value)} type="password" placeholder="Password" />
@@ -243,6 +320,9 @@ export default function Home() {
               <option>CO Monitor</option>
               <option>Multi Gas Detector</option>
             </select>
+            {limitWarning && (
+              <div style={{color:'red', fontWeight:700, marginTop:6}}>{limitWarning}</div>
+            )}
             <input type="number" style={styles.input} min={1} max={10} value={form.quantity} onChange={e=>setForm({...form, quantity: Number(e.target.value)})} />
             <textarea style={{...styles.input, height:80}} value={form.reason} onChange={e=>setForm({...form, reason: e.target.value})} />
             <div style={{display:'flex', gap:10}}>
@@ -275,11 +355,19 @@ export default function Home() {
                       <td>{r.reason}</td>
                       <td>{r.status}</td>
                       <td>
-                        <select defaultValue={r.status} onChange={e=>updateStatus(r._id, e.target.value)}>
-                          <option>Pending</option>
-                          <option>Approved</option>
-                          <option>Issued</option>
-                        </select>
+                        {['Issued','Rejected'].includes(r.status) ? (
+                          <select value={r.status} disabled style={{opacity:0.7}}>
+                            <option>Pending</option>
+                            <option>Issued</option>
+                            <option>Rejected</option>
+                          </select>
+                        ) : (
+                          <select value={r.status} onChange={e=>updateStatus(r._id, e.target.value)}>
+                            <option>Pending</option>
+                            <option>Issued</option>
+                            <option>Rejected</option>
+                          </select>
+                        )}
                       </td>
                     </tr>
                   ))}
